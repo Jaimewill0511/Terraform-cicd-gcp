@@ -1,0 +1,66 @@
+# Create a connection to GitHub
+resource "google_cloudbuildv2_connection" "github-connection" {
+  location  = var.region
+  name      = "github-connection"
+
+  github_config {
+    app_installation_id = 57458479
+    authorizer_credential {
+      oauth_token_secret_version = "projects/45476477924/secrets/Oathtoken/versions/1"
+    }
+  }
+}
+
+# Link the backend repository to Cloud Build
+resource "google_cloudbuildv2_repository" "backend-repository" {
+  name = "Microservices-app-backend-"
+  parent_connection = google_cloudbuildv2_connection.github-connection.id
+  remote_uri = "https://github.com/Jaimewill0511/Microservices-app-backend-.git"
+}
+
+# Cloud Build Trigger for Backend
+resource "google_cloudbuild_trigger" "backend_trigger" {
+  location = var.region
+  name        = "backend-trigger"
+  description = "Cloud Build pipeline for the backend application"
+  
+  source_to_build {
+    repository  = google_cloudbuildv2_repository.backend-repository.id
+    ref         = "refs/heads/main"
+    repo_type   = "GITHUB"
+  }
+
+  git_file_source {
+    path      = "cloudbuild.yaml"
+    repo_type = "GITHUB"
+    repository = google_cloudbuildv2_repository.backend-repository.id
+    revision   = "refs/heads/main"
+  }
+}
+
+# Link the frontend repository to Cloud Build
+resource "google_cloudbuildv2_repository" "frontend-repository" {
+  name = "-Microservices-app-frontend"
+  parent_connection = google_cloudbuildv2_connection.github-connection.id
+  remote_uri = "https://github.com/Jaimewill0511/-Microservices-app-frontend.git"
+}
+
+# Cloud Build Trigger for Frontend
+resource "google_cloudbuild_trigger" "frontend_trigger" {
+  location = var.region
+  name        = "frontend-trigger"
+  description = "Cloud Build pipeline for the frontend application"
+  
+  source_to_build {
+    repository  = google_cloudbuildv2_repository.frontend-repository.id
+    ref         = "refs/heads/main"
+    repo_type   = "GITHUB"
+  }
+
+  git_file_source {
+    path      = "cloudbuild.yaml"
+    repo_type = "GITHUB"
+    repository = google_cloudbuildv2_repository.frontend-repository.id
+    revision   = "refs/heads/main"
+  }
+}
