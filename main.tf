@@ -51,33 +51,47 @@ resource "google_sql_database_instance" "main" {
   }
 }
 
-# Create a database within the SQL instance
+# Create a database
 resource "google_sql_database" "myappdb" {
   name     = "myappdb"
   instance = google_sql_database_instance.main.name
 }
 
-# Create a user for the database
-resource "google_sql_user" "db_user" {
+# Cloud SQL database
+resource "google_sql_database" "default_db" {
+  name     = "assignment-02-database"
+  instance = google_sql_database_instance.main.name
+}
+
+# Create a user
+resource "google_sql_user" "myuser" {
   name     = "myuser"
   instance = google_sql_database_instance.main.name
-  password = "mypassword" # Use a secure password
+  password = "mypassword"
 }
+
+resource "google_sql_user" "postgres" {
+  name     = "postgres"
+  instance = google_sql_database_instance.main.name
+  password = "mypassword"
+}
+
 
 # Script to run SQL commands for granting privileges and schema access
-resource "null_resource" "initialize_db" {
-  depends_on = [
-    google_sql_user.db_user,
-    google_sql_database.myappdb
-  ]
+# resource "null_resource" "initialize_db" {
+#   depends_on = [
+#     google_sql_user.myuser,
+#     google_sql_database.myappdb
+#   ]
 
- provisioner "local-exec" {
-    command = <<EOT
-      PGPASSWORD="mypassword" psql -h ${google_sql_database_instance.main.public_ip_address} -U postgres -d myappdb -c "GRANT ALL PRIVILEGES ON DATABASE myappdb TO myuser;" -c "\\c myappdb;" -c "GRANT USAGE ON SCHEMA public TO myuser;" -c "GRANT ALL PRIVILEGES ON SCHEMA public TO myuser;"
-    EOT
-  }
+#   provisioner "local-exec" {
+#     command = <<EOT
+#       PGPASSWORD="mypassword" psql -h ${google_sql_database_instance.main.public_ip_address} -U postgres -d myappdb -c "GRANT ALL PRIVILEGES ON DATABASE myappdb TO myuser;" -c "\\c myappdb;" -c "GRANT USAGE ON SCHEMA public TO myuser;" -c "GRANT ALL PRIVILEGES ON SCHEMA public TO myuser;"
+#     EOT
+#   }
+# }
 
-}
+
 
 
 resource "google_container_cluster" "fusion-gke" {
