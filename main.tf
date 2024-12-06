@@ -34,8 +34,9 @@ resource "google_compute_instance" "ci_cd_instance" {
 # Create a Cloud SQL instance
 resource "google_sql_database_instance" "main" {
   name             = "postgres-instance"
-  database_version = "POSTGRES_15" 
+  database_version = "POSTGRES_14" 
   region           = var.region
+  deletion_protection = false
 
   settings {
     tier = "db-f1-micro" # Choose a machine type (adjust as needed)
@@ -70,11 +71,12 @@ resource "null_resource" "initialize_db" {
     google_sql_database.myappdb
   ]
 
-  provisioner "local-exec" {
+ provisioner "local-exec" {
     command = <<EOT
       PGPASSWORD="mypassword" psql -h ${google_sql_database_instance.main.public_ip_address} -U postgres -d myappdb -c "GRANT ALL PRIVILEGES ON DATABASE myappdb TO myuser;" -c "\\c myappdb;" -c "GRANT USAGE ON SCHEMA public TO myuser;" -c "GRANT ALL PRIVILEGES ON SCHEMA public TO myuser;"
     EOT
   }
+
 }
 
 
